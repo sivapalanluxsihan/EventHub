@@ -3,6 +3,8 @@ import cors from 'cors';
 import { config } from './config/env.js';
 import { initDatabase, getDb } from './database/index.js';
 import authRoutes from './routes/authRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
 
 const app = express();
 
@@ -47,6 +49,12 @@ app.get('/api/health/db', (_req: Request, res: Response) => {
 
 // Authentication routes
 app.use('/api/auth', authRoutes);
+
+// Event routes
+app.use('/api/events', eventRoutes);
+
+// Booking routes
+app.use('/api/bookings', bookingRoutes);
 
 // Start server
 app.listen(config.port, () => {
