@@ -9,6 +9,14 @@ import { RegisterScreen } from '../screens/RegisterScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { EventDetailScreen } from '../screens/EventDetailScreen';
+import { BookingScreen } from '../screens/BookingScreen';
+import { BookingConfirmationScreen } from '../screens/BookingConfirmationScreen';
+import { MyBookingsScreen } from '../screens/MyBookingsScreen';
+import { BookingDetailsScreen } from '../screens/BookingDetailsScreen';
+import { OrganizerDashboardScreen } from '../screens/OrganizerDashboardScreen';
+import { OrganizerAddEventScreen } from '../screens/OrganizerAddEventScreen';
+import { OrganizerEditEventScreen } from '../screens/OrganizerEditEventScreen';
+import { OrganizerEventBookingsScreen } from '../screens/OrganizerEventBookingsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -55,6 +63,49 @@ export const RootNavigator: React.FC = () => {
               name="EventDetail"
               component={EventDetailScreen}
               options={{ title: 'Event Details' }}
+            />
+            <Stack.Screen
+              name="Booking"
+              component={BookingScreen}
+              options={{ title: 'Book Event' }}
+            />
+            <Stack.Screen
+              name="BookingConfirmation"
+              component={BookingConfirmationScreen}
+              options={{
+                title: 'Booking Confirmed',
+                headerBackVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="MyBookings"
+              component={MyBookingsScreen}
+              options={{ title: 'My Bookings' }}
+            />
+            <Stack.Screen
+              name="BookingDetails"
+              component={BookingDetailsScreen}
+              options={{ title: 'Booking Details' }}
+            />
+            <Stack.Screen
+              name="OrganizerDashboard"
+              component={OrganizerDashboardScreen}
+              options={{ title: 'Organizer Portal' }}
+            />
+            <Stack.Screen
+              name="OrganizerAddEvent"
+              component={OrganizerAddEventScreen}
+              options={{ title: 'Create Event' }}
+            />
+            <Stack.Screen
+              name="OrganizerEditEvent"
+              component={OrganizerEditEventScreen}
+              options={{ title: 'Edit Event' }}
+            />
+            <Stack.Screen
+              name="OrganizerEventBookings"
+              component={OrganizerEventBookingsScreen}
+              options={{ title: 'Event Bookings' }}
             />
           </>
         ) : (

@@ -130,14 +130,36 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => navigation.navigate('Profile')}
-          accessibilityRole="button"
-          accessibilityLabel="View Profile"
-        >
-          <Text style={styles.profileButtonText}>View My Profile →</Text>
-        </TouchableOpacity>
+        {user?.role === 'ORGANIZER' && (
+          <TouchableOpacity
+            style={styles.organizerBannerBtn}
+            onPress={() => navigation.navigate('OrganizerDashboard')}
+            accessibilityRole="button"
+            accessibilityLabel="Organizer Dashboard"
+          >
+            <Text style={styles.organizerBannerBtnText}>📊 Manage Events (Organizer Portal) →</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.profileButton, styles.bookingsActionBtn]}
+            onPress={() => navigation.navigate('MyBookings')}
+            accessibilityRole="button"
+            accessibilityLabel="My Bookings"
+          >
+            <Text style={styles.bookingsActionBtnText}>🎟️ My Bookings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.profileButton, styles.profileActionBtn]}
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityRole="button"
+            accessibilityLabel="View Profile"
+          >
+            <Text style={styles.profileButtonText}>👤 Profile →</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Search Input Bar */}
@@ -339,15 +361,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  organizerBannerBtn: {
+    backgroundColor: '#1a365d',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: '#1a365d',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  organizerBannerBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
   profileButton: {
     backgroundColor: '#edf2f7',
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookingsActionBtn: {
+    flex: 1.1,
+    backgroundColor: '#ebf8ff',
+    borderWidth: 1,
+    borderColor: '#bee3f8',
+  },
+  bookingsActionBtnText: {
+    color: '#2b6cb0',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  profileActionBtn: {
+    flex: 0.9,
   },
   profileButtonText: {
-    color: '#2b6cb0',
+    color: '#4a5568',
     fontSize: 13,
     fontWeight: '600',
   },

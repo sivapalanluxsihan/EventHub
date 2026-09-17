@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../types/navigation';
 import { Event } from '../types/event';
 import { api } from '../services/api';
@@ -54,9 +55,11 @@ export const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  useEffect(() => {
-    loadEvent();
-  }, [eventId]);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadEvent();
+    }, [eventId])
+  );
 
   if (isLoading) {
     return (
@@ -99,17 +102,17 @@ export const EventDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const isSoldOut = event.availableSeats <= 0;
 
   const handleBookingPress = () => {
-    if (isSoldOut) {
+    if (isSoldOut || !event) {
       Alert.alert(
         'Sold Out',
         'Sorry, this event is completely sold out. No seats are available for booking.'
       );
       return;
     }
-    Alert.alert(
-      'Ready for Booking',
-      'The booking backend API is ready. Full booking UI will be connected in Step 19.'
-    );
+    navigation.navigate('Booking', {
+      eventId: event.id,
+      event,
+    });
   };
 
   return (

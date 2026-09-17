@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { getDb } from '../database/index.js';
 import { AuthRequest, Booking } from '../types/index.js';
-import { BookingWithEvent } from '../types/booking.js';
+import { BookingWithEvent, OrganizerBookingItem } from '../types/booking.js';
 
 /**
  * POST /api/bookings
@@ -147,6 +147,7 @@ export const getUserBookings = (req: AuthRequest, res: Response): void => {
            b.updatedAt,
            e.name AS eventName,
            e.image AS eventImage,
+           e.description AS eventDescription,
            e.date,
            e.time,
            e.location,
@@ -199,6 +200,7 @@ export const getBookingById = (req: AuthRequest, res: Response): void => {
            b.updatedAt,
            e.name AS eventName,
            e.image AS eventImage,
+           e.description AS eventDescription,
            e.date,
            e.time,
            e.location,
@@ -322,5 +324,104 @@ export const cancelBooking = (req: AuthRequest, res: Response): void => {
     }
     console.error('Error cancelling booking:', error);
     res.status(500).json({ error: 'Internal server error while cancelling booking' });
+  }
+};
+
+/**
+ * GET /api/organizer/events/:eventId/bookings
+ * Returns bookings for an event belonging to the authenticated organizer.
+ * Only the organizer who created the event can access its bookings.
+ */
+export const getOrganizerEventBookings = (req: AuthRequest, res: Response): void => {
+  try {
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    if (userRole !== 'ORGANIZER') {
+      res.status(403).json({ error: 'Access denied: Organizer role required' });
+      return;
+    }
+
+    const eventId = Number(req.params.eventId);
+    if (isNaN(eventId) || !Number.isInteger(eventId) || eventId <= 0) {
+      res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+
+    const db = getDb();
+
+    // Check if event exists
+    const event = db
+      .prepare(
+        `SELECT id, organizerId, name, date, time, location, price, availableSeats 
+         FROM events 
+         WHERE id = ?`
+      )
+      .get(eventId) as
+      | {
+          id: number;
+          organizerId: number;
+          name: string;
+          date: string;
+          time: string;
+          location: string;
+          price: number;
+          availableSeats: number;
+        }
+      | undefined;
+
+    if (!event) {
+      res.status(404).json({ error: 'Event not found' });
+      return;
+    }
+
+    // Check ownership: event must belong to authenticated organizer
+    if (event.organizerId !== userId) {
+      res.status(403).json({
+        error: 'Access denied: You do not have permission to view bookings for this event',
+      });
+      return;
+    }
+
+    // Retrieve bookings with user details (excluding passwordHash, password, tokens)
+    const bookings = db
+      .prepare(
+        `SELECT 
+           b.id,
+           b.userId,
+           b.eventId,
+           b.numberOfSeats,
+           b.status,
+           b.bookingDate,
+           b.createdAt,
+           u.name AS customerName,
+           u.email AS customerEmail
+         FROM bookings b
+         JOIN users u ON b.userId = u.id
+         WHERE b.eventId = ?
+         ORDER BY b.createdAt DESC`
+      )
+      .all(eventId) as OrganizerBookingItem[];
+
+    res.status(200).json({
+      event: {
+        id: event.id,
+        name: event.name,
+        date: event.date,
+        time: event.time,
+        location: event.location,
+        price: event.price,
+        availableSeats: event.availableSeats,
+      },
+      bookings,
+    });
+  } catch (error) {
+    console.error('Error fetching organizer event bookings:', error);
+    res.status(500).json({ error: 'Internal server error while retrieving event bookings' });
   }
 };

@@ -5,6 +5,7 @@ import { initDatabase, getDb } from './database/index.js';
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
+import organizerRoutes from './routes/organizerRoutes.js';
 
 const app = express();
 
@@ -55,6 +56,9 @@ app.use('/api/events', eventRoutes);
 
 // Booking routes
 app.use('/api/bookings', bookingRoutes);
+
+// Organizer routes
+app.use('/api/organizer', organizerRoutes);
 
 // Start server
 app.listen(config.port, () => {

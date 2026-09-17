@@ -27,3 +27,27 @@ export const EVENT_CATEGORIES: EventCategory[] = [
   'Education',
   'Community',
 ];
+
+export interface CreateEventDto {
+  name: string;
+  image?: string | null;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+  price: number;
+  availableSeats: number;
+}
+
+export interface UpdateEventDto {
+  name?: string;
+  image?: string | null;
+  description?: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  category?: string;
+  price?: number;
+  availableSeats?: number;
+}

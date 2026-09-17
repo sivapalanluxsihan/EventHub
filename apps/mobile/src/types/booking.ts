@@ -1,11 +1,6 @@
-import { BookingStatus } from './index.js';
+export type BookingStatus = 'CONFIRMED' | 'CANCELLED';
 
-export interface CreateBookingDto {
-  eventId: number;
-  numberOfSeats: number;
-}
-
-export interface BookingWithEvent {
+export interface Booking {
   id: number;
   userId: number;
   eventId: number;
@@ -14,6 +9,14 @@ export interface BookingWithEvent {
   bookingDate: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BookingResponse {
+  message: string;
+  booking: Booking;
+}
+
+export interface BookingWithEvent extends Booking {
   eventName: string;
   eventImage: string | null;
   eventDescription?: string | null;

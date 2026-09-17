@@ -13,6 +13,10 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../context/AuthContext';
+import {
+  getNotificationPermissionStatus,
+  requestNotificationPermissions,
+} from '../services/notificationService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -21,7 +25,7 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-export const ProfileScreen: React.FC<Props> = () => {
+export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, updateProfile, logout, refreshProfile } = useAuth();
 
   const [name, setName] = useState(user?.name || '');
@@ -30,13 +34,25 @@ export const ProfileScreen: React.FC<Props> = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [notificationEnabled, setNotificationEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
       setName(user.name);
       setEmail(user.email);
     }
+    checkNotificationStatus();
   }, [user]);
+
+  const checkNotificationStatus = async () => {
+    const status = await getNotificationPermissionStatus();
+    setNotificationEnabled(status.granted);
+  };
+
+  const handleToggleNotification = async () => {
+    const result = await requestNotificationPermissions();
+    setNotificationEnabled(result.granted);
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -160,6 +176,66 @@ export const ProfileScreen: React.FC<Props> = () => {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Notification Status Card */}
+        <View style={styles.notificationCard}>
+          <View style={styles.notifHeaderRow}>
+            <View style={styles.notifTitleRow}>
+              <Text style={styles.notifIcon}>🔔</Text>
+              <Text style={styles.notifTitle}>Event Alerts</Text>
+            </View>
+            <View
+              style={[
+                styles.notifBadge,
+                notificationEnabled ? styles.notifBadgeActive : styles.notifBadgeInactive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.notifBadgeText,
+                  notificationEnabled ? styles.notifTextActive : styles.notifTextInactive,
+                ]}
+              >
+                {notificationEnabled ? '● Enabled' : '○ Disabled'}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.notifDesc}>
+            Receive instant booking confirmations, cancellation updates, and event reminders.
+          </Text>
+          {!notificationEnabled && (
+            <TouchableOpacity
+              style={styles.enableNotifButton}
+              onPress={handleToggleNotification}
+              accessibilityRole="button"
+              accessibilityLabel="Enable Notifications"
+            >
+              <Text style={styles.enableNotifButtonText}>Enable Notifications</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Organizer Portal Action */}
+        {user?.role === 'ORGANIZER' && (
+          <TouchableOpacity
+            style={styles.organizerButton}
+            onPress={() => navigation.navigate('OrganizerDashboard')}
+            accessibilityRole="button"
+            accessibilityLabel="Organizer Portal"
+          >
+            <Text style={styles.organizerButtonText}>📊 Organizer Portal</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* My Bookings Action */}
+        <TouchableOpacity
+          style={styles.bookingsButton}
+          onPress={() => navigation.navigate('MyBookings')}
+          accessibilityRole="button"
+          accessibilityLabel="View My Bookings"
+        >
+          <Text style={styles.bookingsButtonText}>🎟️ View My Bookings</Text>
+        </TouchableOpacity>
 
         {/* Logout Section */}
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
@@ -317,6 +393,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  organizerButton: {
+    backgroundColor: '#1a365d',
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  organizerButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  bookingsButton: {
+    backgroundColor: '#ebf8ff',
+    borderWidth: 1.5,
+    borderColor: '#bee3f8',
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  bookingsButtonText: {
+    color: '#2b6cb0',
+    fontSize: 15,
+    fontWeight: '700',
+  },
   logoutButton: {
     backgroundColor: '#fed7d7',
     borderRadius: 8,
@@ -328,6 +432,84 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#9b2c2c',
     fontSize: 15,
+    fontWeight: '700',
+  },
+  notificationCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#edf2f7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  notifHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  notifTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notifIcon: {
+    fontSize: 18,
+  },
+  notifTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1a365d',
+  },
+  notifBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  notifBadgeActive: {
+    backgroundColor: '#f0fff4',
+    borderWidth: 1,
+    borderColor: '#9ae6b4',
+  },
+  notifBadgeInactive: {
+    backgroundColor: '#edf2f7',
+    borderWidth: 1,
+    borderColor: '#cbd5e0',
+  },
+  notifBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  notifTextActive: {
+    color: '#22543d',
+  },
+  notifTextInactive: {
+    color: '#718096',
+  },
+  notifDesc: {
+    fontSize: 12,
+    color: '#718096',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  enableNotifButton: {
+    backgroundColor: '#ebf8ff',
+    borderWidth: 1,
+    borderColor: '#90cdf4',
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  enableNotifButtonText: {
+    color: '#2b6cb0',
+    fontSize: 13,
     fontWeight: '700',
   },
 });

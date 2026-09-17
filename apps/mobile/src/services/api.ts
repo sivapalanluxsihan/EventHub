@@ -1,6 +1,13 @@
 import { Platform } from 'react-native';
 import { AuthResponse, User } from '../types/auth';
-import { Event } from '../types/event';
+import { Event, CreateEventDto, UpdateEventDto } from '../types/event';
+import {
+  Booking,
+  BookingResponse,
+  BookingWithEvent,
+  OrganizerEventBookingsResponse,
+} from '../types/booking';
+import { storage } from './storage';
 
 // On Android emulator, 10.0.2.2 maps to the host machine's localhost (port 5000)
 export const API_BASE_URL =
@@ -15,7 +22,14 @@ interface RequestOptions {
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, token } = options;
+  const { method = 'GET', body } = options;
+  let token = options.token;
+
+  // Automatically supply JWT from local persistent storage if not explicitly provided
+  if (!token) {
+    token = await storage.getToken();
+  }
+
   const url = `${API_BASE_URL}${endpoint}`;
 
   const headers: Record<string, string> = {
@@ -38,7 +52,9 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     if (!response.ok) {
       const errorMessage =
         data?.error || data?.message || `Request failed with status ${response.status}`;
-      throw new Error(errorMessage);
+      const err = new Error(errorMessage);
+      (err as any).status = response.status;
+      throw err;
     }
 
     return data as T;
@@ -115,6 +131,89 @@ export const api = {
   getEventById: async (id: number): Promise<{ event: Event }> => {
     return request<{ event: Event }>(`/events/${id}`, {
       method: 'GET',
+    });
+  },
+
+  createBooking: async (
+    eventId: number,
+    numberOfSeats: number,
+    token?: string
+  ): Promise<BookingResponse> => {
+    return request<BookingResponse>('/bookings', {
+      method: 'POST',
+      token,
+      body: { eventId, numberOfSeats },
+    });
+  },
+
+  getUserBookings: async (token?: string): Promise<{ bookings: BookingWithEvent[] }> => {
+    return request<{ bookings: BookingWithEvent[] }>('/bookings', {
+      method: 'GET',
+      token,
+    });
+  },
+
+  getBookingById: async (id: number, token?: string): Promise<{ booking: BookingWithEvent }> => {
+    return request<{ booking: BookingWithEvent }>(`/bookings/${id}`, {
+      method: 'GET',
+      token,
+    });
+  },
+
+  cancelBooking: async (
+    id: number,
+    token?: string
+  ): Promise<{ message: string; booking: Booking }> => {
+    return request<{ message: string; booking: Booking }>(`/bookings/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  },
+
+  createEvent: async (
+    data: CreateEventDto,
+    token?: string
+  ): Promise<{ message: string; event: Event }> => {
+    return request<{ message: string; event: Event }>('/events', {
+      method: 'POST',
+      token,
+      body: data,
+    });
+  },
+
+  getOrganizerEvents: async (token?: string): Promise<{ events: Event[] }> => {
+    return request<{ events: Event[] }>('/events/organizer/my-events', {
+      method: 'GET',
+      token,
+    });
+  },
+
+  updateEvent: async (
+    id: number,
+    data: UpdateEventDto,
+    token?: string
+  ): Promise<{ message: string; event: Event }> => {
+    return request<{ message: string; event: Event }>(`/events/${id}`, {
+      method: 'PUT',
+      token,
+      body: data,
+    });
+  },
+
+  deleteEvent: async (id: number, token?: string): Promise<{ message: string }> => {
+    return request<{ message: string }>(`/events/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  },
+
+  getOrganizerEventBookings: async (
+    eventId: number,
+    token?: string
+  ): Promise<OrganizerEventBookingsResponse> => {
+    return request<OrganizerEventBookingsResponse>(`/organizer/events/${eventId}/bookings`, {
+      method: 'GET',
+      token,
     });
   },
 };
